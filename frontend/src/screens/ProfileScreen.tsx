@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { Spacing, FontSize, BorderRadius } from '../constants/Spacing';
 import { useAuthStore } from '../store/authStore';
+import { authService } from '../services/authService';
+import { getBaseUrl } from '../config/environment';
 import AddCalorieModal from './AddCalorieModal';
 
 interface ProfileScreenProps {
@@ -10,9 +12,8 @@ interface ProfileScreenProps {
 }
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const [addCalorieModalVisible, setAddCalorieModalVisible] = useState(false);
-  const [todayCalories, setTodayCalories] = useState(1200); // TODO: Get from API
 
   const handleLogout = async () => {
     Alert.alert(
@@ -27,7 +28,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             try {
               await logout();
             } catch (error) {
-              console.error('Logout error:', error);
+              // Logout error handling
             }
           }
         }
@@ -40,13 +41,27 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     return date.toLocaleDateString('tr-TR');
   };
 
-  const handleAddCalorie = (calories: number, description: string) => {
-    setTodayCalories(prev => prev + calories);
-    Alert.alert(
-      'Kalori Eklendi',
-      `${calories} kalori eklendi: ${description}`,
-      [{ text: 'Tamam' }]
-    );
+  const handleAddCalorie = async (calories: number, description: string) => {
+    try {
+      // Backend'e kalori ekle
+      const response = await authService.addCalories(calories);
+      
+      // AuthStore'u güncelle
+      if (user) {
+        updateUser({
+          ...user,
+          dailyCalories: response.dailyCalories
+        });
+      }
+      
+      Alert.alert(
+        'Kalori Eklendi',
+        `${calories} kalori eklendi: ${description}`,
+        [{ text: 'Tamam' }]
+      );
+    } catch (error) {
+      Alert.alert('Hata', 'Kalori eklenirken bir hata oluştu.');
+    }
   };
 
   return (
@@ -54,9 +69,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       {/* Profile Header */}
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>👨‍🍳</Text>
+          {user?.profileImage ? (
+            <Image 
+              source={{ uri: `${getBaseUrl()}${user.profileImage}` }} 
+              style={styles.avatarImage}
+            />
+          ) : (
+            <Text style={styles.avatarText}>👨‍🍳</Text>
+          )}
         </View>
         <Text style={styles.username}>{user?.username}</Text>
+        {user?.bio && <Text style={styles.bio}>{user.bio}</Text>}
         <Text style={styles.email}>{user?.email}</Text>
         <Text style={styles.joinDate}>
           Üye olma: {user?.createdAt ? formatDate(user.createdAt) : '-'}
@@ -76,7 +99,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             onPress={() => setAddCalorieModalVisible(true)}
           >
             <Text style={styles.statNumber}>
-              {todayCalories} / {user?.dailyCalories || 2000}
+              {user?.dailyCalories || 0} / {user?.dailyCalorieGoal || 2000}
             </Text>
             <Text style={styles.statLabel}>Alınan / Hedef Kalori</Text>
             <Text style={styles.addCalorieHint}>Dokunarak kalori ekle</Text>
@@ -87,11 +110,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <View style={styles.calorieProgressSection}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { 
-              width: `${Math.min(100, (todayCalories / (user?.dailyCalories || 2000)) * 100)}%` 
+              width: `${Math.min(100, ((user?.dailyCalories || 0) / (user?.dailyCalorieGoal || 2000)) * 100)}%` 
             }]} />
           </View>
           <Text style={styles.progressText}>
-            Kalan: {Math.max(0, (user?.dailyCalories || 2000) - todayCalories)} kalori
+            Kalan: {Math.max(0, (user?.dailyCalorieGoal || 2000) - (user?.dailyCalories || 0))} kalori
           </Text>
         </View>
       </View>
@@ -113,11 +136,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           onPress={() => navigation.navigate('EditProfile')}
         >
           <Text style={styles.settingText}>✏️ Profil Bilgilerini Düzenle</Text>
-          <Text style={styles.settingArrow}>›</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingText}>🔔 Bildirim Ayarları</Text>
           <Text style={styles.settingArrow}>›</Text>
         </TouchableOpacity>
         
@@ -167,11 +185,23 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 40,
   },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
   username: {
     fontSize: FontSize.title,
     fontWeight: 'bold',
     color: Colors.text,
     marginBottom: Spacing.sm,
+  },
+  bio: {
+    fontSize: FontSize.md,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+    fontStyle: 'italic',
   },
   email: {
     fontSize: FontSize.md,

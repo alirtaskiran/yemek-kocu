@@ -9,6 +9,7 @@ import { View, StyleSheet } from 'react-native';
 import { Colors } from './src/constants/Colors';
 import { useAuthStore } from './src/store/authStore';
 import { RootStackParamList } from './src/types';
+import { getApiBaseUrl } from './src/config/environment';
 
 // Import screens (we'll create these next)
 import AuthScreen from './src/screens/AuthScreen';
@@ -40,11 +41,24 @@ const LoadingScreen = () => (
 );
 
 export default function App() {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, checkAuth, user } = useAuthStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Initialize API URL detection
+  useEffect(() => {
+    const initializeApiUrl = async () => {
+      try {
+        await getApiBaseUrl();
+      } catch (error) {
+        // Ignore API URL detection errors
+      }
+    };
+
+    initializeApiUrl();
+  }, []);
 
   if (isLoading) {
     return <LoadingScreen />;

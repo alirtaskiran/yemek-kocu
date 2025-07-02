@@ -25,12 +25,19 @@ const HomeScreen = () => {
         <Text style={styles.sectionTitle}>Günlük Kalori Takibi</Text>
         <View style={styles.caloriesCard}>
           <View style={styles.caloriesInfo}>
-            <Text style={styles.caloriesNumber}>{user?.dailyCalories || 0}</Text>
-            <Text style={styles.caloriesLabel}>kalori</Text>
+            <Text style={styles.caloriesNumber}>
+              {user?.dailyCalories || 0} / {user?.dailyCalorieGoal || 2000}
+            </Text>
+            <Text style={styles.caloriesLabel}>alınan / hedef kalori</Text>
+            <Text style={styles.caloriesRemaining}>
+              Kalan: {Math.max(0, (user?.dailyCalorieGoal || 2000) - (user?.dailyCalories || 0))} kalori
+            </Text>
           </View>
           <View style={styles.caloriesRing}>
             {/* Placeholder for calorie ring - we'll implement this later */}
-            <Text style={styles.caloriesRingText}>📊</Text>
+            <Text style={styles.caloriesRingText}>
+              {Math.round(((user?.dailyCalories || 0) / (user?.dailyCalorieGoal || 2000)) * 100)}%
+            </Text>
           </View>
         </View>
       </View>
@@ -120,6 +127,11 @@ const styles = StyleSheet.create({
   caloriesLabel: {
     fontSize: FontSize.md,
     color: Colors.textSecondary,
+  },
+  caloriesRemaining: {
+    fontSize: FontSize.sm,
+    color: Colors.textTertiary,
+    marginTop: Spacing.xs,
   },
   caloriesRing: {
     width: 60,

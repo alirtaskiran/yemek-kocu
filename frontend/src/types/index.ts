@@ -7,6 +7,7 @@ export interface User {
   bio?: string;
   totalPoints: number;
   dailyCalories: number;
+  dailyCalorieGoal: number;
   // Physical info for calorie calculation
   age?: number;
   gender?: 'male' | 'female';

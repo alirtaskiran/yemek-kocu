@@ -14,13 +14,22 @@ export interface RegisterCredentials {
 }
 
 class AuthService {
+  // Clean up old cached data
+  async cleanupOldData(): Promise<void> {
+    try {
+      // Remove old user_data that's no longer used
+      await AsyncStorage.removeItem('user_data');
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+  }
+
   // Login user
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiService.post<any>('/auth/login', credentials);
     
-    // Store token and user data
+    // Only store token
     await AsyncStorage.setItem('auth_token', response.token);
-    await AsyncStorage.setItem('user_data', JSON.stringify(response.user));
     
     return response;
   }
@@ -29,9 +38,8 @@ class AuthService {
   async register(credentials: RegisterCredentials): Promise<AuthResponse> {
     const response = await apiService.post<any>('/auth/register', credentials);
     
-    // Store token and user data
+    // Only store token
     await AsyncStorage.setItem('auth_token', response.token);
-    await AsyncStorage.setItem('user_data', JSON.stringify(response.user));
     
     return response;
   }
@@ -39,21 +47,6 @@ class AuthService {
   // Logout user
   async logout(): Promise<void> {
     await AsyncStorage.removeItem('auth_token');
-    await AsyncStorage.removeItem('user_data');
-  }
-
-  // Get current user
-  async getCurrentUser(): Promise<User | null> {
-    try {
-      const userData = await AsyncStorage.getItem('user_data');
-      if (userData) {
-        return JSON.parse(userData);
-      }
-      return null;
-    } catch (error) {
-      console.error('Error getting current user:', error);
-      return null;
-    }
   }
 
   // Check if user is authenticated
@@ -62,7 +55,6 @@ class AuthService {
       const token = await AsyncStorage.getItem('auth_token');
       return token !== null;
     } catch (error) {
-      console.error('Error checking authentication:', error);
       return false;
     }
   }
@@ -74,27 +66,40 @@ class AuthService {
 
   // Update user profile
   async updateProfile(data: Partial<User>): Promise<User> {
-    const response = await apiService.put<User>('/auth/me', data);
-    
-    // Update stored user data
-    await AsyncStorage.setItem('user_data', JSON.stringify(response));
-    
-    return response;
+    return apiService.put<User>('/auth/profile', data);
   }
 
   // Get daily calories
   async getDailyCalories(): Promise<{ dailyCalories: number }> {
-    return apiService.get<{ dailyCalories: number }>('/auth/me/daily-calories');
+    return apiService.get<{ dailyCalories: number }>('/auth/daily-calories');
   }
 
   // Add calories
   async addCalories(calories: number): Promise<{ dailyCalories: number }> {
-    return apiService.post<{ dailyCalories: number }>('/auth/me/add-calories', { calories });
+    return apiService.post<{ dailyCalories: number }>('/auth/add-calories', { calories });
   }
 
   // Reset daily calories
   async resetCalories(): Promise<{ dailyCalories: number }> {
-    return apiService.post<{ dailyCalories: number }>('/auth/me/reset-calories');
+    return apiService.post<{ dailyCalories: number }>('/auth/reset-calories');
+  }
+
+  // Update calorie goal
+  async updateCalorieGoal(calorieGoal: number): Promise<{ dailyCalorieGoal: number }> {
+    return apiService.put<{ dailyCalorieGoal: number }>('/auth/calorie-goal', { calorieGoal });
+  }
+
+  // Upload profile image
+  async uploadProfileImage(imageUri: string): Promise<{ user: User; imageUrl: string }> {
+    const formData = new FormData();
+    
+    formData.append('profileImage', {
+      uri: imageUri,
+      type: 'image/jpeg',
+      name: 'profile-image.jpg',
+    } as any);
+
+    return apiService.postFormData<{ user: User; imageUrl: string }>('/auth/upload-profile-image', formData);
   }
 }
 

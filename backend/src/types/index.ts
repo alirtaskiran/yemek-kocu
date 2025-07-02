@@ -118,9 +118,4 @@ export interface AuthenticatedRequest extends Request {
   user?: JwtPayload;
 }
 
-// Notification Types
-export interface PushNotificationData {
-  title: string;
-  body: string;
-  data?: Record<string, any>;
-} 
+ 

@@ -366,6 +366,8 @@ router.post('/:id/invitations', authenticateToken, async (req: Request, res: Res
       }
     });
 
+    // TODO: Implement push notifications when needed
+
     res.status(201).json({
       success: true,
       data: invitation,
@@ -620,6 +622,8 @@ router.post('/:id/meal-vote', authenticateToken, async (req: Request, res: Respo
         })
       )
     );
+
+    // TODO: Implement push notifications when needed
 
     res.status(201).json({
       success: true,

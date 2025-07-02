@@ -16,7 +16,7 @@ import { Spacing, FontSize, BorderRadius } from '../constants/Spacing';
 interface AddCalorieModalProps {
   visible: boolean;
   onClose: () => void;
-  onAddCalorie: (calories: number, description: string) => void;
+  onAddCalorie: (calories: number, description: string) => Promise<void>;
 }
 
 const AddCalorieModal: React.FC<AddCalorieModalProps> = ({ 
@@ -57,7 +57,7 @@ const AddCalorieModal: React.FC<AddCalorieModalProps> = ({
     }
   };
 
-  const handleManualSubmit = () => {
+  const handleManualSubmit = async () => {
     const calories = parseInt(manualCalories);
     if (isNaN(calories) || calories <= 0 || calories > 3000) {
       Alert.alert('Hata', 'Geçerli bir kalori değeri giriniz (1-3000).');
@@ -68,8 +68,15 @@ const AddCalorieModal: React.FC<AddCalorieModalProps> = ({
       return;
     }
 
-    onAddCalorie(calories, foodDescription.trim());
-    handleClose();
+    setLoading(true);
+    try {
+      await onAddCalorie(calories, foodDescription.trim());
+      handleClose();
+    } catch (error) {
+      // Error handling is done in parent component
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFoodSearch = () => {
@@ -171,10 +178,13 @@ const AddCalorieModal: React.FC<AddCalorieModalProps> = ({
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.submitButton}
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
           onPress={handleManualSubmit}
+          disabled={loading}
         >
-          <Text style={styles.submitButtonText}>Ekle</Text>
+          <Text style={styles.submitButtonText}>
+            {loading ? 'Ekleniyor...' : 'Ekle'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -420,6 +430,9 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: Colors.gray[600],
   },
   submitButtonText: {
     color: Colors.white,

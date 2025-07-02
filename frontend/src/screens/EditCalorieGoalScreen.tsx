@@ -14,6 +14,7 @@ import {
 import { Colors } from '../constants/Colors';
 import { Spacing, FontSize, BorderRadius } from '../constants/Spacing';
 import { useAuthStore } from '../store/authStore';
+import { authService } from '../services/authService';
 
 interface EditCalorieGoalScreenProps {
   navigation: any;
@@ -21,7 +22,7 @@ interface EditCalorieGoalScreenProps {
 
 const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigation }) => {
   const { user, updateUser } = useAuthStore();
-  const [calorieGoal, setCalorieGoal] = useState(user?.dailyCalories?.toString() || '2000');
+  const [calorieGoal, setCalorieGoal] = useState(user?.dailyCalorieGoal?.toString() || '2000');
   const [loading, setLoading] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   
@@ -54,14 +55,14 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
 
     setLoading(true);
     try {
-      // TODO: API call to update calorie goal
-      // await updateCalorieGoal(parseInt(calorieGoal));
+      // API call to update calorie goal
+      await authService.updateCalorieGoal(parseInt(calorieGoal));
       
-      // Temporarily update local state
+      // Update local state
       if (user) {
         updateUser({
           ...user,
-          dailyCalories: parseInt(calorieGoal)
+          dailyCalorieGoal: parseInt(calorieGoal)
         });
       }
 
@@ -71,6 +72,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
         [{ text: 'Tamam', onPress: () => navigation.goBack() }]
       );
     } catch (error) {
+      console.error('Update calorie goal error:', error);
       Alert.alert('Hata', 'Kalori hedefi güncellenirken bir hata oluştu.');
     } finally {
       setLoading(false);
@@ -150,7 +152,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
         <View style={styles.currentGoalSection}>
           <Text style={styles.sectionTitle}>Mevcut Hedefiniz</Text>
           <View style={styles.currentGoalCard}>
-            <Text style={styles.currentGoalNumber}>{user?.dailyCalories || 2000}</Text>
+            <Text style={styles.currentGoalNumber}>{user?.dailyCalorieGoal || 2000}</Text>
             <Text style={styles.currentGoalLabel}>kalori/gün</Text>
           </View>
         </View>

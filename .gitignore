@@ -65,6 +65,7 @@ web-build/
 
 # Firebase
 backend/config/firebase-service-account.json
+backend/yemek-kocu-firebase-adminsdk.json
 
 # Temporary files
 *.tmp

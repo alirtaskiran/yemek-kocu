@@ -26,6 +26,7 @@ export const useMyFamilies = () => {
     queryKey: familyKeys.myFamilies(),
     queryFn: () => familyService.getMyFamilies(),
     enabled: isAuthenticated,
+    staleTime: 0, // Always consider data stale to ensure fresh data after family operations
   });
 };
 
@@ -45,14 +46,20 @@ export const useFamily = (familyId?: string) => {
       const response = await familyService.getMyFamilies();
       setFamilies(response || []);
       
-      // If no specific familyId provided, use the first family
-      if (!familyId && response && response.length > 0) {
+      // If no families returned, clear current family state
+      if (!response || response.length === 0) {
+        setFamily(null);
+        setActiveMealVotes([]);
+      } else if (!familyId) {
+        // If no specific familyId provided, use the first family
         setFamily(response[0]);
         setActiveMealVotes(response[0].mealVotes || []);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch families');
       setFamilies([]);
+      setFamily(null);
+      setActiveMealVotes([]);
     } finally {
       setLoading(false);
     }
@@ -269,6 +276,8 @@ export const useDeleteFamily = () => {
       // Remove from cache and invalidate lists
       queryClient.removeQueries({ queryKey: familyKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: familyKeys.myFamilies() });
+      // Clear pending invitations cache to avoid stale data
+      queryClient.invalidateQueries({ queryKey: ['invitations', 'pending'] });
     },
   });
 };
@@ -295,6 +304,7 @@ export const usePendingInvitations = () => {
     queryFn: () => familyService.getPendingInvitations(),
     enabled: isAuthenticated,
     refetchInterval: 5 * 1000, // Check for new invitations every 5 seconds (temporary - will use WebSocket later)
+    staleTime: 0, // Always consider data stale to ensure fresh data after family operations
   });
 };
 

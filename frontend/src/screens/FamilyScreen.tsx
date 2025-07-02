@@ -148,16 +148,16 @@ const FamilyScreen = () => {
           style: 'destructive',
           onPress: async () => {
             if (family) {
-                             try {
-                 await familyService.deleteFamily(family.id);
-                 Alert.alert('Başarılı!', 'Aile silindi.');
-                 // Reset state after deletion
-                 setFamily(null);
-                 setActiveMealVotes([]);
-                 await fetchMyFamilies(); // Refresh families list
-               } catch (error) {
-                 Alert.alert('Hata', 'Aile silinemedi.');
-               }
+              try {
+                await familyService.deleteFamily(family.id);
+                Alert.alert('Başarılı!', 'Aile silindi.');
+                // Reset state after deletion
+                setFamily(null);
+                setActiveMealVotes([]);
+                await fetchMyFamilies(); // Refresh families list
+              } catch (error) {
+                Alert.alert('Hata', 'Aile silinemedi.');
+              }
             }
           }
         }
@@ -358,15 +358,15 @@ const FamilyScreen = () => {
 
       {/* Current Voting */}
       {activeMealVotes.length > 0 && (
-        <View style={styles.votingSection}>
+      <View style={styles.votingSection}>
           <Text style={styles.sectionTitle}>🗳️ Aktif Oylama</Text>
           {activeMealVotes.map((vote) => (
             <View key={vote.id} style={styles.votingCard}>
               <Text style={styles.votingQuestion}>{vote.title}</Text>
-              <Text style={styles.votingDeadline}>
+          <Text style={styles.votingDeadline}>
                 ⏰ Bitiş: {new Date(vote.endsAt).toLocaleString()}
-              </Text>
-              
+          </Text>
+          
               {vote.options.map((option) => (
                 <TouchableOpacity
                   key={option.id}
@@ -389,15 +389,15 @@ const FamilyScreen = () => {
 
       {/* Family Members */}
       {family?.members && (
-        <View style={styles.membersSection}>
-          <Text style={styles.sectionTitle}>👥 Aile Üyeleri</Text>
-          <FlatList
+      <View style={styles.membersSection}>
+        <Text style={styles.sectionTitle}>👥 Aile Üyeleri</Text>
+        <FlatList
             data={family.members}
-            renderItem={renderFamilyMember}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-          />
-        </View>
+          renderItem={renderFamilyMember}
+          keyExtractor={(item) => item.id}
+          scrollEnabled={false}
+        />
+      </View>
       )}
 
       {/* Quick Actions */}

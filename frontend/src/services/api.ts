@@ -1,10 +1,10 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiResponse } from '../types';
-import { API_BASE_URL } from '../config/environment';
+import { API_BASE_URL_FALLBACK, getApiBaseUrl } from '../config/environment';
 
 // Using environment configuration for flexible network switching
-const BASE_URL = API_BASE_URL;
+let BASE_URL = API_BASE_URL_FALLBACK;
 
 class ApiService {
   private api: AxiosInstance;
@@ -19,6 +19,19 @@ class ApiService {
     });
 
     this.setupInterceptors();
+    this.initializeBaseUrl();
+  }
+
+  private async initializeBaseUrl() {
+    try {
+      const detectedUrl = await getApiBaseUrl();
+      if (detectedUrl !== BASE_URL) {
+        BASE_URL = detectedUrl;
+        this.api.defaults.baseURL = BASE_URL;
+      }
+    } catch (error) {
+      // Use fallback URL if detection fails
+    }
   }
 
   private setupInterceptors() {
@@ -45,7 +58,6 @@ class ApiService {
         if (error.response?.status === 401) {
           // Token expired or invalid
           await AsyncStorage.removeItem('auth_token');
-          await AsyncStorage.removeItem('user_data');
           // You might want to redirect to login screen here
         }
         return Promise.reject(error);
@@ -81,16 +93,8 @@ class ApiService {
   }
 
   private handleError(error: AxiosError) {
-    if (error.response) {
-      // Server responded with error status
-      console.error('API Error:', error.response.data);
-    } else if (error.request) {
-      // Request made but no response received
-      console.error('Network Error:', error.request);
-    } else {
-      // Something else happened
-      console.error('Error:', error.message);
-    }
+    // Error handling without console logs
+    // Errors will be handled by the calling components
   }
 
   // Convenience methods
@@ -112,6 +116,31 @@ class ApiService {
 
   async delete<T>(url: string): Promise<T> {
     return this.request<T>('DELETE', url);
+  }
+
+  // Form data post method for file uploads
+  async postFormData<T>(url: string, formData: FormData): Promise<T> {
+    try {
+      const token = await AsyncStorage.getItem('auth_token');
+      console.log('Form data upload token:', token ? 'exists' : 'missing');
+      
+      const response = await this.api.post(url, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+      
+      // Backend returns { success: true, data: actualData } format
+      if (response.data && response.data.success && response.data.data !== undefined) {
+        return response.data.data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+      throw error;
+    }
   }
 }
 

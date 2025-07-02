@@ -255,6 +255,8 @@ router.post('/:id/start-cooking', authenticateToken, async (req: Request, res: R
       }
     });
 
+    // TODO: Implement push notifications when needed
+
     res.json({
       success: true,
       data: progress,

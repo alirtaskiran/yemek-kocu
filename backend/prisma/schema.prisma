@@ -21,6 +21,7 @@ model User {
   preferences       String   @default("{}") // JSON as string for SQLite
   totalPoints       Int      @default(0)
   dailyCalories     Int      @default(0) // Günlük kalori takibi
+  dailyCalorieGoal  Int      @default(2000) // Günlük kalori hedefi
   // Physical info for calorie calculation
   age               Int?
   gender            String?  // 'male' | 'female'

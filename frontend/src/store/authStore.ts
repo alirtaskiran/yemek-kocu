@@ -89,16 +89,22 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   checkAuth: async () => {
     set({ isLoading: true });
     try {
+      // Clean up old cached data
+      await authService.cleanupOldData();
+      
       const isAuth = await authService.isAuthenticated();
       if (isAuth) {
-        const user = await authService.getCurrentUser();
-        if (user) {
+        try {
+          // Get fresh user data from server
+          const user = await authService.getUserProfile();
           set({
             user,
             isAuthenticated: true,
             isLoading: false,
           });
-        } else {
+        } catch (serverError) {
+          // If server request fails, logout user
+          await authService.logout();
           set({
             user: null,
             isAuthenticated: false,
