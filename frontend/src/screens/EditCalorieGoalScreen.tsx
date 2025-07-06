@@ -15,6 +15,7 @@ import { Colors } from '../constants/Colors';
 import { Spacing, FontSize, BorderRadius } from '../constants/Spacing';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
+import { APP_CONSTANTS, validateCalorieGoal } from '../constants/AppConstants';
 
 interface EditCalorieGoalScreenProps {
   navigation: any;
@@ -22,7 +23,7 @@ interface EditCalorieGoalScreenProps {
 
 const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigation }) => {
   const { user, updateUser } = useAuthStore();
-  const [calorieGoal, setCalorieGoal] = useState(user?.dailyCalorieGoal?.toString() || '2000');
+  const [calorieGoal, setCalorieGoal] = useState(user?.dailyCalorieGoal?.toString() || APP_CONSTANTS.DEFAULT_CALORIE_GOAL.toString());
   const [loading, setLoading] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   
@@ -36,12 +37,12 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
     goal: 'maintain' as 'lose' | 'maintain' | 'gain'
   });
 
-  const validateCalorieGoal = (value: string): boolean => {
+  const validateCalorieGoalInput = (value: string): boolean => {
     const numValue = parseInt(value);
-    if (isNaN(numValue) || numValue < 800 || numValue > 5000) {
+    if (isNaN(numValue) || !validateCalorieGoal(numValue)) {
       Alert.alert(
         'Geçersiz Değer',
-        'Kalori hedefi 800 ile 5000 arasında olmalıdır.'
+        `Kalori hedefi ${APP_CONSTANTS.MIN_CALORIE_GOAL} ile ${APP_CONSTANTS.MAX_CALORIE_GOAL} arasında olmalıdır.`
       );
       return false;
     }
@@ -49,7 +50,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
   };
 
   const handleSave = async () => {
-    if (!validateCalorieGoal(calorieGoal)) {
+    if (!validateCalorieGoalInput(calorieGoal)) {
       return;
     }
 
@@ -152,7 +153,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
         <View style={styles.currentGoalSection}>
           <Text style={styles.sectionTitle}>Mevcut Hedefiniz</Text>
           <View style={styles.currentGoalCard}>
-            <Text style={styles.currentGoalNumber}>{user?.dailyCalorieGoal || 2000}</Text>
+            <Text style={styles.currentGoalNumber}>{user?.dailyCalorieGoal || APP_CONSTANTS.DEFAULT_CALORIE_GOAL}</Text>
             <Text style={styles.currentGoalLabel}>kalori/gün</Text>
           </View>
         </View>
@@ -165,7 +166,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
               style={styles.input}
               value={calorieGoal}
               onChangeText={setCalorieGoal}
-              placeholder="Örn: 2000"
+              placeholder={`Örn: ${APP_CONSTANTS.DEFAULT_CALORIE_GOAL}`}
               placeholderTextColor={Colors.textTertiary}
               keyboardType="numeric"
               maxLength={4}
@@ -238,7 +239,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
                     style={styles.smallInput}
                     value={calculatorData.age}
                     onChangeText={(text) => setCalculatorData({...calculatorData, age: text})}
-                    placeholder="25"
+                    placeholder={APP_CONSTANTS.DEFAULT_AGE.toString()}
                     placeholderTextColor={Colors.textTertiary}
                     keyboardType="numeric"
                     maxLength={2}
@@ -250,7 +251,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
                     style={styles.smallInput}
                     value={calculatorData.height}
                     onChangeText={(text) => setCalculatorData({...calculatorData, height: text})}
-                    placeholder="170"
+                    placeholder={APP_CONSTANTS.DEFAULT_HEIGHT.toString()}
                     placeholderTextColor={Colors.textTertiary}
                     keyboardType="numeric"
                     maxLength={3}
@@ -262,7 +263,7 @@ const EditCalorieGoalScreen: React.FC<EditCalorieGoalScreenProps> = ({ navigatio
                     style={styles.smallInput}
                     value={calculatorData.weight}
                     onChangeText={(text) => setCalculatorData({...calculatorData, weight: text})}
-                    placeholder="70"
+                    placeholder={APP_CONSTANTS.DEFAULT_WEIGHT.toString()}
                     placeholderTextColor={Colors.textTertiary}
                     keyboardType="numeric"
                     maxLength={3}

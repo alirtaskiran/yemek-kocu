@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
 import { getBaseUrl } from '../config/environment';
 import AddCalorieModal from './AddCalorieModal';
+import { APP_CONSTANTS } from '../constants/AppConstants';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -78,7 +79,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             <Text style={styles.avatarText}>👨‍🍳</Text>
           )}
         </View>
-        <Text style={styles.username}>{user?.username}</Text>
+        <Text style={styles.displayName}>{user?.name || user?.username}</Text>
+        <Text style={styles.username}>@{user?.username}</Text>
         {user?.bio && <Text style={styles.bio}>{user.bio}</Text>}
         <Text style={styles.email}>{user?.email}</Text>
         <Text style={styles.joinDate}>
@@ -99,7 +101,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             onPress={() => setAddCalorieModalVisible(true)}
           >
             <Text style={styles.statNumber}>
-              {user?.dailyCalories || 0} / {user?.dailyCalorieGoal || 2000}
+              {user?.dailyCalories || 0} / {user?.dailyCalorieGoal || APP_CONSTANTS.DEFAULT_CALORIE_GOAL}
             </Text>
             <Text style={styles.statLabel}>Alınan / Hedef Kalori</Text>
             <Text style={styles.addCalorieHint}>Dokunarak kalori ekle</Text>
@@ -110,11 +112,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <View style={styles.calorieProgressSection}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { 
-              width: `${Math.min(100, ((user?.dailyCalories || 0) / (user?.dailyCalorieGoal || 2000)) * 100)}%` 
+              width: `${Math.min(100, ((user?.dailyCalories || 0) / (user?.dailyCalorieGoal || APP_CONSTANTS.DEFAULT_CALORIE_GOAL)) * 100)}%` 
             }]} />
           </View>
           <Text style={styles.progressText}>
-            Kalan: {Math.max(0, (user?.dailyCalorieGoal || 2000) - (user?.dailyCalories || 0))} kalori
+            Kalan: {Math.max(0, (user?.dailyCalorieGoal || APP_CONSTANTS.DEFAULT_CALORIE_GOAL) - (user?.dailyCalories || 0))} kalori
           </Text>
         </View>
       </View>
@@ -190,10 +192,15 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
   },
-  username: {
+  displayName: {
     fontSize: FontSize.title,
     fontWeight: 'bold',
     color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  username: {
+    fontSize: FontSize.sm,
+    color: Colors.textSecondary,
     marginBottom: Spacing.sm,
   },
   bio: {

@@ -15,6 +15,7 @@ model User {
   id                String   @id @default(cuid())
   email             String   @unique
   username          String   @unique
+  name              String?  // Gerçek isim
   password          String
   profileImage      String?
   bio               String?
@@ -22,6 +23,7 @@ model User {
   totalPoints       Int      @default(0)
   dailyCalories     Int      @default(0) // Günlük kalori takibi
   dailyCalorieGoal  Int      @default(2000) // Günlük kalori hedefi
+  isAdmin           Boolean  @default(false) // Admin kullanıcılar için
   // Physical info for calorie calculation
   age               Int?
   gender            String?  // 'male' | 'female'
@@ -34,6 +36,9 @@ model User {
   // Relations
   recipes           Recipe[]
   comments          Comment[]
+  recipeLikes       RecipeLike[]
+  recipeViews       RecipeView[]
+  calorieEntries    CalorieEntry[]
   familyMemberships FamilyMember[]
   userProgresses    UserProgress[]
   userMealVotes     UserMealVote[]
@@ -60,12 +65,19 @@ model Recipe {
   instructions      String   @default("[]") // JSON as string for SQLite
   images            String   @default("[]") // JSON as string for SQLite
   isApproved        Boolean  @default(false)
+  // Sosyal özellikler
+  likesCount        Int      @default(0)
+  commentsCount     Int      @default(0)
+  viewsCount        Int      @default(0)
+  trendingScore     Float    @default(0) // Trend algoritması için
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   // Relations
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   comments          Comment[]
+  likes             RecipeLike[]
+  views             RecipeView[]
   userProgresses    UserProgress[]
   mealVoteOptions   MealVoteOption[]
 
@@ -208,4 +220,49 @@ model FamilyInvitation {
   inviter         User     @relation("SentInvitations", fields: [inviterUserId], references: [id], onDelete: Cascade)
 
   @@map("family_invitations")
+}
+
+// Recipe Like Model - Beğeni sistemi
+model RecipeLike {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+  @@map("recipe_likes")
+}
+
+// Recipe View Model - Görüntülenme takibi
+model RecipeView {
+  id        String   @id @default(cuid())
+  userId    String
+  recipeId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId])
+  @@map("recipe_views")
+}
+
+// Calorie Entry Model - Kalori girişleri
+model CalorieEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  calories    Int
+  description String
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("calorie_entries")
 } 

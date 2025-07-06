@@ -10,6 +10,8 @@ interface EnvironmentConfig {
 export const Environment: EnvironmentConfig = {
   // Tüm olası API URL'leri - öncelik sırasına göre
   API_URLS: [
+    'http://172.20.10.4:3000/api',      // Hotspot IP
+    'http://192.168.1.105:3000/api',    // Güncel IP
     'http://192.168.1.109:3000/api',    // Ev ağı
     'http://192.168.1.115:3000/api',    // Dükkan/ofis ağı
     'http://localhost:3000/api',        // Local development

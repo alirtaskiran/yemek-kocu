@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, StyleSheet } from 'react-native';
+import * as Linking from 'expo-linking';
 
 import { Colors } from './src/constants/Colors';
 import { useAuthStore } from './src/store/authStore';
@@ -16,6 +17,7 @@ import AuthScreen from './src/screens/AuthScreen';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import RecipeDetailScreen from './src/screens/RecipeDetailScreen';
 import CookingModeScreen from './src/screens/CookingModeScreen';
+import CreateRecipeScreen from './src/screens/CreateRecipeScreen';
 import FamilyVotingScreen from './src/screens/FamilyVotingScreen';
 import EditCalorieGoalScreen from './src/screens/EditCalorieGoalScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
@@ -60,6 +62,22 @@ export default function App() {
     initializeApiUrl();
   }, []);
 
+  // Deep linking configuration
+  const linking = {
+    prefixes: [
+      'yemekkocu://',
+      'https://yemekkocu.app',
+      'https://www.yemekkocu.app',
+    ],
+    config: {
+      screens: {
+        Main: 'main',
+        RecipeDetail: 'recipe/:recipeId',
+        CookingMode: 'cooking/:recipeId',
+      },
+    },
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -97,6 +115,7 @@ export default function App() {
               },
             },
           }}
+          linking={linking}
         >
           <Stack.Navigator
             screenOptions={{
@@ -124,7 +143,7 @@ export default function App() {
                   name="RecipeDetail"
                   component={RecipeDetailScreen}
                   options={{
-                    title: 'Tarif Detayı',
+                    headerShown: false,
                   }}
                 />
                 <Stack.Screen
@@ -132,6 +151,15 @@ export default function App() {
                   component={CookingModeScreen}
                   options={{
                     title: 'Yemek Yapıyorum',
+                    presentation: 'modal',
+                    gestureEnabled: false,
+                  }}
+                />
+                <Stack.Screen
+                  name="CreateRecipe"
+                  component={CreateRecipeScreen}
+                  options={{
+                    title: 'Yeni Tarif',
                     presentation: 'modal',
                   }}
                 />

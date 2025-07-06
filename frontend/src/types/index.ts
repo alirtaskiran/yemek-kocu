@@ -3,6 +3,7 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  name?: string;
   profileImage?: string;
   bio?: string;
   totalPoints: number;
@@ -39,6 +40,11 @@ export interface Recipe {
   instructions: string[];
   images: string[];
   isApproved: boolean;
+  // Sosyal özellikler
+  likesCount?: number;
+  commentsCount?: number;
+  viewsCount?: number;
+  trendingScore?: number;
   createdAt: string;
   updatedAt: string;
   user?: {
@@ -173,6 +179,7 @@ export type RootStackParamList = {
   Main: undefined;
   RecipeDetail: { recipeId: string };
   CookingMode: { recipeId: string };
+  CreateRecipe: undefined;
   FamilyVoting: { familyId: string; voteId: string };
   EditCalorieGoal: undefined;
   EditProfile: undefined;
@@ -180,7 +187,7 @@ export type RootStackParamList = {
 
 export type MainTabParamList = {
   Home: undefined;
-  Explore: undefined;
+  Explore: { searchQuery?: string };
   Family: undefined;
   Profile: undefined;
 };

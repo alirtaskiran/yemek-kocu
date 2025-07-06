@@ -7,7 +7,10 @@ const FamilyVotingScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Aile Oylaması</Text>
-      <Text style={styles.subtitle}>"Bu akşam ne yesek?" oylaması burada olacak</Text>
+      <Text style={styles.subtitle}>
+        Aile oylaması özelliği gelecek sürümlerde eklenecek.{'\n\n'}
+        Bu özellik ile aile üyeleri birlikte ne yemek yapacağına karar verebilecek.
+      </Text>
     </View>
   );
 };

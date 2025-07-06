@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { Spacing, FontSize, BorderRadius } from '../constants/Spacing';
+import { APP_CONSTANTS, validateDailyCalories } from '../constants/AppConstants';
 
 interface AddCalorieModalProps {
   visible: boolean;
@@ -44,7 +45,7 @@ const AddCalorieModal: React.FC<AddCalorieModalProps> = ({
   const handlePhotoCapture = async () => {
     setLoading(true);
     try {
-      // TODO: Implement camera and AI analysis
+      // Kamera ve AI analizi gelecek sürümlerde eklenecek
       Alert.alert(
         'Fotoğraf Analizi',
         'Bu özellik yakında gelecek! Şimdilik manuel giriş kullanabilirsiniz.',
@@ -59,8 +60,8 @@ const AddCalorieModal: React.FC<AddCalorieModalProps> = ({
 
   const handleManualSubmit = async () => {
     const calories = parseInt(manualCalories);
-    if (isNaN(calories) || calories <= 0 || calories > 3000) {
-      Alert.alert('Hata', 'Geçerli bir kalori değeri giriniz (1-3000).');
+    if (isNaN(calories) || calories <= 0 || !validateDailyCalories(calories)) {
+      Alert.alert('Hata', `Geçerli bir kalori değeri giriniz (1-${APP_CONSTANTS.MAX_DAILY_CALORIES}).`);
       return;
     }
     if (!foodDescription.trim()) {
@@ -80,7 +81,7 @@ const AddCalorieModal: React.FC<AddCalorieModalProps> = ({
   };
 
   const handleFoodSearch = () => {
-    // TODO: Implement food database search
+    // Yemek veritabanı arama özelliği gelecek sürümlerde eklenecek
     Alert.alert(
       'Yemek Arama',
       'Bu özellik yakında gelecek! Şimdilik manuel giriş kullanabilirsiniz.',

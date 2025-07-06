@@ -103,4 +103,67 @@ export class AuthService {
       throw new Error('Invalid or expired token');
     }
   }
+
+  async updateDailyCalories(userId: string, additionalCalories: number): Promise<{ success: boolean; newTotal: number }> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { dailyCalories: true }
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        dailyCalories: user.dailyCalories + additionalCalories
+      }
+    });
+
+    return {
+      success: true,
+      newTotal: updatedUser.dailyCalories
+    };
+  }
+
+  async addCalorieEntry(userId: string, calories: number, description: string): Promise<{ success: boolean; entry: any }> {
+    // Kalori girişini kaydet
+    const entry = await prisma.calorieEntry.create({
+      data: {
+        userId,
+        calories,
+        description,
+        date: new Date()
+      }
+    });
+
+    // Kullanıcının günlük kalorisini güncelle
+    await this.updateDailyCalories(userId, calories);
+
+    return {
+      success: true,
+      entry
+    };
+  }
+
+  async getCalorieEntries(userId: string, date?: Date): Promise<any[]> {
+    const startOfDay = date ? new Date(date.setHours(0, 0, 0, 0)) : new Date(new Date().setHours(0, 0, 0, 0));
+    const endOfDay = date ? new Date(date.setHours(23, 59, 59, 999)) : new Date(new Date().setHours(23, 59, 59, 999));
+
+    const entries = await prisma.calorieEntry.findMany({
+      where: {
+        userId,
+        date: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return entries;
+  }
 } 

@@ -18,6 +18,7 @@ import { Spacing, FontSize, BorderRadius } from '../constants/Spacing';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/authService';
 import { getBaseUrl } from '../config/environment';
+import { APP_CONSTANTS } from '../constants/AppConstants';
 
 interface EditProfileScreenProps {
   navigation: any;
@@ -30,6 +31,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
   
   // Form state
   const [formData, setFormData] = useState({
+    name: user?.name || '',
     username: user?.username || '',
     bio: user?.bio || '',
     age: user?.age?.toString() || '',
@@ -52,6 +54,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
     setLoading(true);
     try {
       const updateData: any = {
+        name: formData.name.trim(),
         username: formData.username.trim(),
         bio: formData.bio.trim(),
       };
@@ -231,6 +234,19 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
             <Text style={styles.sectionTitle}>Temel Bilgiler</Text>
           
           <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>İsim Soyisim</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.name}
+                onChangeText={(value) => updateFormData('name', value)}
+              placeholder="Adınız ve soyadınız"
+              placeholderTextColor={Colors.textTertiary}
+                autoCapitalize="words"
+                maxLength={50}
+            />
+          </View>
+          
+          <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Kullanıcı Adı *</Text>
             <TextInput
               style={styles.input}
@@ -274,7 +290,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
                 style={styles.input}
                 value={formData.age}
                 onChangeText={(value) => updateFormData('age', value)}
-                placeholder="Örn: 25"
+                placeholder={`Örn: ${APP_CONSTANTS.DEFAULT_AGE}`}
                 placeholderTextColor={Colors.textTertiary}
                 keyboardType="numeric"
                 maxLength={3}
@@ -322,7 +338,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
                   style={styles.input}
                 value={formData.height}
                   onChangeText={(value) => updateFormData('height', value)}
-                  placeholder="Örn: 170"
+                  placeholder={`Örn: ${APP_CONSTANTS.DEFAULT_HEIGHT}`}
                 placeholderTextColor={Colors.textTertiary}
                 keyboardType="numeric"
                 maxLength={3}
@@ -335,7 +351,7 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
                   style={styles.input}
                 value={formData.weight}
                   onChangeText={(value) => updateFormData('weight', value)}
-                  placeholder="Örn: 70"
+                  placeholder={`Örn: ${APP_CONSTANTS.DEFAULT_WEIGHT}`}
                 placeholderTextColor={Colors.textTertiary}
                 keyboardType="numeric"
                 maxLength={3}

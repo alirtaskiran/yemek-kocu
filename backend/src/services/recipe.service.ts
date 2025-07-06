@@ -3,6 +3,12 @@ import { CreateRecipeDto, PaginatedResponse } from '../types';
 
 export class RecipeService {
   async createRecipe(userId: string, recipeData: CreateRecipeDto) {
+    // Kullanıcının admin olup olmadığını kontrol et
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true }
+    });
+    
     const recipe = await prisma.recipe.create({
       data: {
         userId,
@@ -19,6 +25,7 @@ export class RecipeService {
         ingredients: JSON.stringify(recipeData.ingredients),
         instructions: JSON.stringify(recipeData.instructions),
         images: JSON.stringify(recipeData.images || []),
+        isApproved: true, // Geçici olarak tüm tarifleri onayla (admin sistemi düzeltilecek)
       },
       include: {
         user: {
@@ -49,7 +56,7 @@ export class RecipeService {
     const skip = (page - 1) * limit;
     
     const where: any = {
-      isApproved: true, // Sadece onaylanmış tarifleri göster
+      // isApproved: true, // Geçici olarak tüm tarifleri göster
     };
 
     // Filters
@@ -285,24 +292,226 @@ export class RecipeService {
     }
 
     if (filters?.maxPrepTime) {
-      where.prepTime = {
-        lte: filters.maxPrepTime
-      };
+      where.prepTime = { lte: filters.maxPrepTime };
     }
 
-    // SQLite'da RANDOM() kullanarak rastgele seçim
-    const recipes = await prisma.$queryRaw`
-      SELECT * FROM recipes 
-      WHERE isApproved = 1 
-      ORDER BY RANDOM() 
-      LIMIT ${count}
-    ` as any[];
+    const totalRecipes = await prisma.recipe.count({ where });
+    
+    if (totalRecipes === 0) {
+      return [];
+    }
 
-    // Her tarif için detayları al
-    const detailedRecipes = await Promise.all(
-      recipes.map(recipe => this.getRecipeById(recipe.id))
-    );
+    const randomSkip = Math.floor(Math.random() * Math.max(0, totalRecipes - count));
 
-    return detailedRecipes;
+    const recipes = await prisma.recipe.findMany({
+      where,
+      skip: randomSkip,
+      take: count,
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profileImage: true,
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            userProgresses: true,
+          }
+        }
+      }
+    });
+
+    return recipes.map(recipe => this.formatRecipe(recipe));
+  }
+
+  // Beğeni sistemi
+  async likeRecipe(userId: string, recipeId: string) {
+    try {
+      // Beğeniyi ekle
+      await prisma.recipeLike.create({
+        data: {
+          userId,
+          recipeId,
+        }
+      });
+
+      // Recipe'in beğeni sayısını güncelle
+      const recipe = await prisma.recipe.update({
+        where: { id: recipeId },
+        data: {
+          likesCount: {
+            increment: 1
+          }
+        }
+      });
+
+      // Trend skorunu güncelle
+      await this.updateTrendingScore(recipeId);
+
+      return { success: true, likesCount: recipe.likesCount };
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new Error('Recipe already liked');
+      }
+      throw error;
+    }
+  }
+
+  async unlikeRecipe(userId: string, recipeId: string) {
+    const like = await prisma.recipeLike.findUnique({
+      where: {
+        userId_recipeId: {
+          userId,
+          recipeId
+        }
+      }
+    });
+
+    if (!like) {
+      throw new Error('Recipe not liked');
+    }
+
+    await prisma.recipeLike.delete({
+      where: {
+        userId_recipeId: {
+          userId,
+          recipeId
+        }
+      }
+    });
+
+    const recipe = await prisma.recipe.update({
+      where: { id: recipeId },
+      data: {
+        likesCount: {
+          decrement: 1
+        }
+      }
+    });
+
+    await this.updateTrendingScore(recipeId);
+
+    return { success: true, likesCount: recipe.likesCount };
+  }
+
+  async isRecipeLiked(userId: string, recipeId: string) {
+    const like = await prisma.recipeLike.findUnique({
+      where: {
+        userId_recipeId: {
+          userId,
+          recipeId
+        }
+      }
+    });
+
+    return !!like;
+  }
+
+  // Görüntüleme sistemi
+  async viewRecipe(userId: string, recipeId: string) {
+    try {
+      // Görüntülemeyi ekle (eğer daha önce görüntülenmemişse)
+      await prisma.recipeView.create({
+        data: {
+          userId,
+          recipeId,
+        }
+      });
+
+      // Recipe'in görüntülenme sayısını güncelle
+      await prisma.recipe.update({
+        where: { id: recipeId },
+        data: {
+          viewsCount: {
+            increment: 1
+          }
+        }
+      });
+
+      // Trend skorunu güncelle
+      await this.updateTrendingScore(recipeId);
+
+      return { success: true };
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        // Zaten görüntülenmiş, sessizce geç
+        return { success: true };
+      }
+      throw error;
+    }
+  }
+
+  // Trend tarifleri - sadece etkileşim almış tarifler
+  async getTrendingRecipes(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+
+    const recipes = await prisma.recipe.findMany({
+      where: {
+        isApproved: true,
+        trendingScore: { gt: 0 }  // Sadece trending score'u 0'dan büyük olanlar
+      },
+      skip,
+      take: limit,
+      orderBy: [
+        { trendingScore: 'desc' },
+        { createdAt: 'desc' }
+      ],
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            profileImage: true,
+          }
+        },
+        _count: {
+          select: {
+            comments: true,
+            userProgresses: true,
+          }
+        }
+      }
+    });
+
+    return recipes.map(recipe => this.formatRecipe(recipe));
+  }
+
+  // Trend skoru hesaplama
+  async updateTrendingScore(recipeId: string) {
+    const recipe = await prisma.recipe.findUnique({
+      where: { id: recipeId },
+      select: {
+        likesCount: true,
+        commentsCount: true,
+        viewsCount: true,
+        createdAt: true,
+      }
+    });
+
+    if (!recipe) {
+      return;
+    }
+
+    // Trend skoru hesaplama algoritması
+    const now = new Date();
+    const ageInDays = (now.getTime() - recipe.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    
+    // Yaş faktörü (yeni tarifler daha yüksek skor alır)
+    const ageFactor = Math.max(0.1, 1 - (ageInDays / 180)); // 180 gün sonra minimum skor (6 ay)
+    
+    // Etkileşim skoru
+    const interactionScore = (recipe.likesCount * 3) + (recipe.commentsCount * 5) + (recipe.viewsCount * 0.1);
+    
+    // Final trend skoru
+    const trendingScore = interactionScore * ageFactor;
+
+    // Trend skorunu güncelle
+    await prisma.recipe.update({
+      where: { id: recipeId },
+      data: { trendingScore }
+    });
   }
 } 

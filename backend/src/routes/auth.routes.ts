@@ -69,6 +69,7 @@ router.post('/register', asyncHandler(async (req: Request, res: Response) => {
         id: true,
         email: true,
         username: true,
+        name: true,
         password: true,
         profileImage: true,
         bio: true,
@@ -140,6 +141,7 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
         id: true,
         email: true,
         username: true,
+        name: true,
         password: true,
         profileImage: true,
         bio: true,
@@ -373,7 +375,7 @@ router.post('/reset-calories', authenticateToken, async (req: Request, res: Resp
 router.put('/profile', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.user!.userId;
-    const { username, bio, age, gender, height, weight } = req.body;
+    const { name, username, bio, age, gender, height, weight } = req.body;
 
     // Check if username is taken by another user
     if (username) {
@@ -422,6 +424,7 @@ router.put('/profile', authenticateToken, async (req: Request, res: Response): P
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
+        ...(name !== undefined && { name }),
         ...(username && { username }),
         ...(bio !== undefined && { bio }),
         ...(age && { age }),
@@ -433,6 +436,7 @@ router.put('/profile', authenticateToken, async (req: Request, res: Response): P
         id: true,
         email: true,
         username: true,
+        name: true,
         profileImage: true,
         bio: true,
         totalPoints: true,
@@ -471,6 +475,7 @@ router.get('/me', authenticateToken, async (req: Request, res: Response): Promis
         id: true,
         email: true,
         username: true,
+        name: true,
         profileImage: true,
         bio: true,
         totalPoints: true,

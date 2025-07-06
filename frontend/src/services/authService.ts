@@ -89,6 +89,18 @@ class AuthService {
     return apiService.put<{ dailyCalorieGoal: number }>('/auth/calorie-goal', { calorieGoal });
   }
 
+  // Add calorie entry with description
+  async addCalorieEntry(calories: number, description: string): Promise<{ success: boolean; entry: any }> {
+    return apiService.post<{ success: boolean; entry: any }>('/auth/calories', { calories, description });
+  }
+
+  // Get calorie entries for a specific date
+  async getCalorieEntries(date?: Date): Promise<any[]> {
+    const params = date ? { date: date.toISOString() } : {};
+    const response = await apiService.get<{ data: any[] }>('/auth/calories', params);
+    return response.data;
+  }
+
   // Upload profile image
   async uploadProfileImage(imageUri: string): Promise<{ user: User; imageUrl: string }> {
     const formData = new FormData();

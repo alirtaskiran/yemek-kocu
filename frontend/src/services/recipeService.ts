@@ -18,8 +18,8 @@ class RecipeService {
   }
 
   // Create new recipe
-  async createRecipe(data: CreateRecipeDto): Promise<Recipe> {
-    return apiService.post<Recipe>('/recipes', data);
+  async createRecipe(recipeData: CreateRecipeDto): Promise<Recipe> {
+    return apiService.post<Recipe>('/recipes', recipeData);
   }
 
   // Update recipe
@@ -87,6 +87,38 @@ class RecipeService {
   async getMyRecipes(): Promise<Recipe[]> {
     return apiService.get<Recipe[]>('/recipes/my-recipes');
   }
+
+  // Get trending recipes
+  async getTrendingRecipes(page = 1, limit = 10): Promise<Recipe[]> {
+    return apiService.get<Recipe[]>('/recipes/trending', { page, limit });
+  }
+
+  // Toggle like on recipe (like/unlike)
+  async toggleLike(recipeId: string): Promise<{ isLiked: boolean; likesCount: number }> {
+    return apiService.post<{ isLiked: boolean; likesCount: number }>(`/recipes/${recipeId}/like`);
+  }
+
+  // Get recipe likes
+  async getRecipeLikes(recipeId: string, page = 1, limit = 20): Promise<{ data: any[]; pagination: any }> {
+    return apiService.get<{ data: any[]; pagination: any }>(`/recipes/${recipeId}/likes`, { page, limit });
+  }
+
+  // Add comment to recipe
+  async addComment(recipeId: string, content: string): Promise<any> {
+    return apiService.post<any>(`/recipes/${recipeId}/comments`, { content });
+  }
+
+  // Get recipe comments
+  async getRecipeComments(recipeId: string, page = 1, limit = 20): Promise<{ data: any[]; pagination: any }> {
+    return apiService.get<{ data: any[]; pagination: any }>(`/recipes/${recipeId}/comments`, { page, limit });
+  }
+
+  // View a recipe (for analytics)
+  async viewRecipe(recipeId: string): Promise<{ success: boolean }> {
+    return apiService.post<{ success: boolean }>(`/recipes/${recipeId}/view`);
+  }
+
+  // Get all recipes (public)
 }
 
 export const recipeService = new RecipeService();
